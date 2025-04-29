@@ -7,7 +7,7 @@ Script for easy interaction with torrents using aria2p
 ◉ <code>pip3 install aria2p</code>
 
 # How to use it?
-◉ Run the script using <code>python3 main.py</code>
+◉ Run the script using <code>python3 main.py <file.torrent or magnet link> [-d (path to save, default: ./downloads)]</code>
 
 ◉ Enter the path to file.torrent or magnet link
 

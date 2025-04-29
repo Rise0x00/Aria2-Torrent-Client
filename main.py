@@ -1,8 +1,8 @@
 import aria2p
-import time
+import atexit
 import argparse
 import subprocess
-import atexit
+from time import sleep
 
 def start_aria2_rpc():
     """Starts aria2c process with RPC server"""
@@ -19,7 +19,6 @@ def start_aria2_rpc():
     return aria2_process
 
 def cleanup(process):
-    """Stops aria2c process on exit"""
     print("\nStopping aria2c...")
     process.terminate()
 
@@ -43,9 +42,7 @@ def main():
             secret=""
         )
     )
-
-    # Giving time for RPC server to initialize
-    time.sleep(1)
+    sleep(3)
 
     # Adding download task
     try:
@@ -68,14 +65,15 @@ def main():
         while not download.is_complete:
             download.update()
             print_progress(download)
-            time.sleep(1)
+            sleep(1)
 
         # Monitoring seeding process
         print("\n\nDownload complete! Starting to seed...")
+        print("Press Ctrl+C to stop\n")
         while True:
             download.update()
             print_seeding_stats(download)
-            time.sleep(5)
+            sleep(5)
 
     except KeyboardInterrupt:
         print("\n\nOperation terminated by user")

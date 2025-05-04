@@ -1,4 +1,4 @@
 {
-    "max_download_speed": 0,
-    "max_upload_speed": 0
-} 
+    "max_download_speed": 5000,
+    "max_upload_speed": 5000
+}

@@ -126,14 +126,14 @@ def print_progress(download):
     speed = download.download_speed_string()
     peers = download.connections
     size = download.total_length_string()
-    status = f"Progress: {progress:.1f}% | Speed: {speed}/s | Peers: {peers} | Size: {size}"
+    status = f"Progress: {progress:.1f}% | Speed: {speed} | Peers: {peers} | Size: {size}"
     print(f"\r{status.ljust(80)}", end='')
 
 def print_seeding_stats(download):
     """Prints seeding statistics"""
     uploaded = download.upload_length_string()
     speed = download.upload_speed_string()
-    status = f"Seeding: Uploaded {uploaded} | Speed: {speed}/s"
+    status = f"Seeding: Uploaded {uploaded} | Speed: {speed}"
     print(f"\r{status.ljust(80)}", end='')
 
 if __name__ == "__main__":

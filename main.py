@@ -2,11 +2,42 @@ import aria2p
 import atexit
 import argparse
 import subprocess
+import os
+import json
 from time import sleep
 
-def start_aria2_rpc():
-    """Starts aria2c process with RPC server"""
-    aria2_process = subprocess.Popen([
+def load_config():
+    """Loads or creates configuration file with download and upload speed settings"""
+    config_path = './aria2_config.json'
+    default_config = {
+        'max_download_speed': 0,  # 0 means no limit
+        'max_upload_speed': 0     # 0 means no limit
+    }
+    
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as config_file:
+                config = json.load(config_file)
+                print(f"Конфигурация загружена: скачивание - {config.get('max_download_speed', 0)} КБ/с, отдача - {config.get('max_upload_speed', 0)} КБ/с")
+                return config
+        except Exception as e:
+            print(f"Ошибка при чтении конфигурационного файла: {str(e)}")
+            print("Создаю конфигурационный файл со стандартными параметрами...")
+    else:
+        print("Конфигурационный файл не найден! Создаю новый со стандартными параметрами...")
+    
+    # Create default config file
+    with open(config_path, 'w') as config_file:
+        json.dump(default_config, config_file, indent=4)
+    
+    return default_config
+
+def start_aria2_rpc(config):
+    """Starts aria2c process with RPC server and speed settings from config"""
+    max_download = config.get('max_download_speed', 0)
+    max_upload = config.get('max_upload_speed', 0)
+    
+    cmd = [
         "aria2c",
         "--enable-rpc",
         "--rpc-listen-port=6800",
@@ -15,7 +46,15 @@ def start_aria2_rpc():
         "--seed-ratio=0.0",
         "--seed-time=0",
         "--allow-overwrite=true"
-    ])
+    ]
+    
+    # Add speed limits if configured
+    if max_download > 0:
+        cmd.append(f"--max-download-limit={max_download}K")
+    if max_upload > 0:
+        cmd.append(f"--max-upload-limit={max_upload}K")
+    
+    aria2_process = subprocess.Popen(cmd)
     return aria2_process
 
 def cleanup(process):
@@ -29,9 +68,12 @@ def main():
     parser.add_argument('-d', '--directory', type=str, default='./downloads', 
                       help='Download directory (default: ./downloads)')
     args = parser.parse_args()
+    
+    # Load configuration
+    config = load_config()
 
-    # Starting aria2c process
-    aria2_process = start_aria2_rpc()
+    # Starting aria2c process with config
+    aria2_process = start_aria2_rpc(config)
     atexit.register(cleanup, aria2_process)
 
     # Initializing API client

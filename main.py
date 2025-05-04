@@ -8,7 +8,7 @@ from time import sleep
 
 def load_config():
     """Loads or creates configuration file with download and upload speed settings"""
-    config_path = './aria2_config.json'
+    config_path = './config.json'
     default_config = {
         'max_download_speed': 0,  # 0 means no limit
         'max_upload_speed': 0     # 0 means no limit

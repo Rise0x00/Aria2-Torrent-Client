@@ -18,13 +18,13 @@ def load_config():
         try:
             with open(config_path, 'r') as config_file:
                 config = json.load(config_file)
-                print(f"Конфигурация загружена: скачивание - {config.get('max_download_speed', 0)} КБ/с, отдача - {config.get('max_upload_speed', 0)} КБ/с")
+                print(f"Configuration loaded: download - {config.get('max_download_speed', 0)} KB/s, upload - {config.get('max_upload_speed', 0)} KB/s")
                 return config
         except Exception as e:
-            print(f"Ошибка при чтении конфигурационного файла: {str(e)}")
-            print("Создаю конфигурационный файл со стандартными параметрами...")
+            print(f"Error reading configuration file: {str(e)}")
+            print("Creating configuration file with default parameters...")
     else:
-        print("Конфигурационный файл не найден! Создаю новый со стандартными параметрами...")
+        print("Configuration file not found! Creating new one with default parameters...")
     
     # Create default config file
     with open(config_path, 'w') as config_file:

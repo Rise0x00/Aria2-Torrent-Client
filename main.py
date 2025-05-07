@@ -1,6 +1,5 @@
 import aria2p
 import atexit
-import argparse
 import subprocess
 import os
 import json
@@ -62,13 +61,11 @@ def cleanup(process):
     process.terminate()
 
 def main():
-    # Parsing command line arguments
-    parser = argparse.ArgumentParser(description='Torrent Downloader and Seeder')
-    parser.add_argument('source', type=str, help='Magnet link or path to .torrent file')
-    parser.add_argument('-d', '--directory', type=str, default='./downloads', 
-                      help='Download directory (default: ./downloads)')
-    args = parser.parse_args()
-    
+    source = input("Enter a magnet link or the path to a file.torrent: ").strip()
+    directory = input("Enter the download folder (default is ./downloads): ").strip()
+    if not directory:
+        directory = "./downloads"
+
     # Load configuration
     config = load_config()
 
@@ -88,10 +85,10 @@ def main():
 
     # Adding download task
     try:
-        if args.source.startswith('magnet:'):
-            download = aria2.add_magnet(args.source, options={"dir": args.directory})
-        elif args.source.endswith('.torrent'):
-            download = aria2.add_torrent(args.source, options={"dir": args.directory})
+        if source.startswith('magnet:'):
+            download = aria2.add_magnet(source, options={"dir": directory})
+        elif source.endswith('.torrent'):
+            download = aria2.add_torrent(source, options={"dir": directory})
         else:
             print("Invalid source. Please use a magnet link or .torrent file.")
             return
@@ -115,7 +112,7 @@ def main():
         while True:
             download.update()
             print_seeding_stats(download)
-            sleep(5)
+            sleep(1)
 
     except KeyboardInterrupt:
         print("\n\nOperation terminated by user")

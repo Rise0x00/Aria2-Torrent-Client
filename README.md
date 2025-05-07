@@ -1,6 +1,8 @@
 # Linux Aria2 Torrent Downloader
 Script for easy interaction with torrents using aria2p and aria2c
 
+Attention! If downloading by magnet link doesn't work - use torrent file! ⚠
+
 # Installing
 ◉ <code>sudo bash install.sh</code>
 

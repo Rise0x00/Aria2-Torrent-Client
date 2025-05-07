@@ -49,8 +49,10 @@ def start_aria2_rpc(config):
         "--continue=true",
         "--seed-ratio=0.0",
         "--seed-time=0",
-        "--allow-overwrite=true"
-    ]
+        "--allow-overwrite=true",
+        "--enable-dht=true",
+        "--bt-enable-lpd=true",
+        "--bt-tracker-connect-timeout=60"]
     
     if max_download > 0:
         cmd.append(f"--max-download-limit={max_download}K")
@@ -86,7 +88,15 @@ def main():
             secret=""
         )
     )
-    sleep(3)
+    for _ in range(10):
+        try:
+            aria2.get_downloads()
+            break
+        except Exception as e: 
+            sleep(1)
+    else:
+        print("Failed to connect to aria2c via RPC")
+        return
 
     # Adding download task
     try:

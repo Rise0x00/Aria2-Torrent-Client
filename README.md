@@ -4,7 +4,7 @@ Script for easy interaction with torrents using aria2p and aria2c
 # Installing
 ◉ <code>sudo bash install.sh</code>
 
-◉ Set the speed limit (Kb/s) in the config (0 without limit)
+◉ Set the speed limit (Kb/s) (0 without limit) and refresh interval in the config
 
 # How to use it?
 ◉ Run the script using <code>python3 main.py</code>

@@ -10,25 +10,30 @@ def load_config():
     config_path = './config.json'
     default_config = {
         'max_download_speed': 0,  # 0 means no limit
-        'max_upload_speed': 0     # 0 means no limit
+        'max_upload_speed': 0,    # 0 means no limit
+        'console_update_interval': 1  # seconds 
     }
     
     if os.path.exists(config_path):
         try:
             with open(config_path, 'r') as config_file:
                 config = json.load(config_file)
-                print(f"Configuration loaded: download - {config.get('max_download_speed', 0)} KB/s, upload - {config.get('max_upload_speed', 0)} KB/s")
+                mds = config.get('max_download_speed', 0)
+                mus = config.get('max_upload_speed', 0)
+                print(f"Configuration loaded: download - {mds if mds > 0 else 'UNLIMITED'} KB/s, upload - {mus if mus > 0 else 'UNLIMITED'} KB/s")
                 return config
         except Exception as e:
             print(f"Error reading configuration file: {str(e)}")
             print("Creating configuration file with default parameters...")
     else:
         print("Configuration file not found! Creating new one with default parameters...")
-    
     # Create default config file
     with open(config_path, 'w') as config_file:
         json.dump(default_config, config_file, indent=4)
-    
+    mds = default_config['max_download_speed']
+    mus = default_config['max_upload_speed']
+    print(f"Configuration file created: download - {mds if mds > 0 else 'UNLIMITED'} KB/s, upload - {mus if mus > 0 else 'UNLIMITED'} KB/s")
+    print("You can edit the config.json file to set your settings.")
     return default_config
 
 def start_aria2_rpc(config):
@@ -47,7 +52,6 @@ def start_aria2_rpc(config):
         "--allow-overwrite=true"
     ]
     
-    # Add speed limits if configured
     if max_download > 0:
         cmd.append(f"--max-download-limit={max_download}K")
     if max_upload > 0:
@@ -57,7 +61,7 @@ def start_aria2_rpc(config):
     return aria2_process
 
 def cleanup(process):
-    print("\nStopping aria2c...")
+    print("Stopping aria2c...")
     process.terminate()
 
 def main():
@@ -68,6 +72,7 @@ def main():
 
     # Load configuration
     config = load_config()
+    UPDATE_INTERVAL = config.get('console_update_interval', 1)
 
     # Starting aria2c process with config
     aria2_process = start_aria2_rpc(config)
@@ -104,7 +109,7 @@ def main():
         while not download.is_complete:
             download.update()
             print_progress(download)
-            sleep(1)
+            sleep(UPDATE_INTERVAL)
 
         # Monitoring seeding process
         print("\n\nDownload complete! Starting to seed...")
@@ -112,7 +117,7 @@ def main():
         while True:
             download.update()
             print_seeding_stats(download)
-            sleep(1)
+            sleep(UPDATE_INTERVAL)
 
     except KeyboardInterrupt:
         print("\n\nOperation terminated by user")

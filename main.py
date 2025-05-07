@@ -1,6 +1,5 @@
 import aria2p
 import atexit
-import argparse
 import subprocess
 import os
 import json
@@ -11,25 +10,30 @@ def load_config():
     config_path = './config.json'
     default_config = {
         'max_download_speed': 0,  # 0 means no limit
-        'max_upload_speed': 0     # 0 means no limit
+        'max_upload_speed': 0,    # 0 means no limit
+        'console_update_interval': 1  # seconds 
     }
     
     if os.path.exists(config_path):
         try:
             with open(config_path, 'r') as config_file:
                 config = json.load(config_file)
-                print(f"Configuration loaded: download - {config.get('max_download_speed', 0)} KB/s, upload - {config.get('max_upload_speed', 0)} KB/s")
+                mds = config.get('max_download_speed', 0)
+                mus = config.get('max_upload_speed', 0)
+                print(f"Configuration loaded: download - {mds if mds > 0 else 'UNLIMITED'} KB/s, upload - {mus if mus > 0 else 'UNLIMITED'} KB/s")
                 return config
         except Exception as e:
             print(f"Error reading configuration file: {str(e)}")
             print("Creating configuration file with default parameters...")
     else:
         print("Configuration file not found! Creating new one with default parameters...")
-    
     # Create default config file
     with open(config_path, 'w') as config_file:
         json.dump(default_config, config_file, indent=4)
-    
+    mds = default_config['max_download_speed']
+    mus = default_config['max_upload_speed']
+    print(f"Configuration file created: download - {mds if mds > 0 else 'UNLIMITED'} KB/s, upload - {mus if mus > 0 else 'UNLIMITED'} KB/s")
+    print("You can edit the config.json file to set your settings.")
     return default_config
 
 def start_aria2_rpc(config):
@@ -45,10 +49,11 @@ def start_aria2_rpc(config):
         "--continue=true",
         "--seed-ratio=0.0",
         "--seed-time=0",
-        "--allow-overwrite=true"
-    ]
+        "--allow-overwrite=true",
+        "--enable-dht=true",
+        "--bt-enable-lpd=true",
+        "--bt-tracker-connect-timeout=60"]
     
-    # Add speed limits if configured
     if max_download > 0:
         cmd.append(f"--max-download-limit={max_download}K")
     if max_upload > 0:
@@ -58,19 +63,18 @@ def start_aria2_rpc(config):
     return aria2_process
 
 def cleanup(process):
-    print("\nStopping aria2c...")
+    print("Stopping aria2c...")
     process.terminate()
 
 def main():
-    # Parsing command line arguments
-    parser = argparse.ArgumentParser(description='Torrent Downloader and Seeder')
-    parser.add_argument('source', type=str, help='Magnet link or path to .torrent file')
-    parser.add_argument('-d', '--directory', type=str, default='./downloads', 
-                      help='Download directory (default: ./downloads)')
-    args = parser.parse_args()
-    
+    source = input("Enter a magnet link or the path to a file.torrent: ").strip()
+    directory = input("Enter the download folder (default is ./downloads): ").strip()
+    if not directory:
+        directory = "./downloads"
+
     # Load configuration
     config = load_config()
+    UPDATE_INTERVAL = config.get('console_update_interval', 1)
 
     # Starting aria2c process with config
     aria2_process = start_aria2_rpc(config)
@@ -84,14 +88,22 @@ def main():
             secret=""
         )
     )
-    sleep(3)
+    for _ in range(10):
+        try:
+            aria2.get_downloads()
+            break
+        except Exception as e: 
+            sleep(1)
+    else:
+        print("Failed to connect to aria2c via RPC")
+        return
 
     # Adding download task
     try:
-        if args.source.startswith('magnet:'):
-            download = aria2.add_magnet(args.source, options={"dir": args.directory})
-        elif args.source.endswith('.torrent'):
-            download = aria2.add_torrent(args.source, options={"dir": args.directory})
+        if source.startswith('magnet:'):
+            download = aria2.add_magnet(source, options={"dir": directory})
+        elif source.endswith('.torrent'):
+            download = aria2.add_torrent(source, options={"dir": directory})
         else:
             print("Invalid source. Please use a magnet link or .torrent file.")
             return
@@ -107,7 +119,7 @@ def main():
         while not download.is_complete:
             download.update()
             print_progress(download)
-            sleep(1)
+            sleep(UPDATE_INTERVAL)
 
         # Monitoring seeding process
         print("\n\nDownload complete! Starting to seed...")
@@ -115,7 +127,7 @@ def main():
         while True:
             download.update()
             print_seeding_stats(download)
-            sleep(5)
+            sleep(UPDATE_INTERVAL)
 
     except KeyboardInterrupt:
         print("\n\nOperation terminated by user")

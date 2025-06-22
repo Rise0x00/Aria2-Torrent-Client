@@ -5,6 +5,7 @@ Script for easy interaction with torrents using aria2p and aria2c
 
 # Installing
 ◉ For Linux: <code>sudo bash install.sh</code>
+
 ◉ For Windows: <code>./win_install.ps1</code>
 
 ◉ Set the speed limit (Kb/s) (0 without limit) and refresh interval in the config

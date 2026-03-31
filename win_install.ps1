@@ -13,7 +13,6 @@ if (Get-Command scoop -ErrorAction SilentlyContinue) {
 } else {
     Write-Status "Scoop not installed. Installing..."
 
-
     try {
         Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
         irm get.scoop.sh | iex
@@ -39,5 +38,5 @@ if (scoop list aria2 -ErrorAction SilentlyContinue) {
         exit 1
     }
 }
-
+pip install -r requirements.txt
 Write-Status "Installing has been completed successfully!"

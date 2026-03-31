@@ -6,17 +6,17 @@ import json
 from time import sleep
 
 def load_config():
-    """Loads or creates configuration file with download and upload speed settings"""
+    """Loads or creates configuration file"""
     config_path = './config.json'
     default_config = {
-        'max_download_speed': 0,  # 0 means no limit
-        'max_upload_speed': 0,    # 0 means no limit
+        'max_download_speed': 0,  # KB/s; 0 = no limit
+        'max_upload_speed': 0,    # KB/s; 0 = no limit
         'console_update_interval': 1  # seconds 
     }
     
     if os.path.exists(config_path):
         try:
-            with open(config_path, 'r') as config_file:
+            with open(config_path, 'r', encoding='utf-8') as config_file:
                 config = json.load(config_file)
                 mds = config.get('max_download_speed', 0)
                 mus = config.get('max_upload_speed', 0)
@@ -27,6 +27,7 @@ def load_config():
             print("Creating configuration file with default parameters...")
     else:
         print("Configuration file not found! Creating new one with default parameters...")
+
     # Create default config file
     with open(config_path, 'w') as config_file:
         json.dump(default_config, config_file, indent=4)
@@ -37,7 +38,7 @@ def load_config():
     return default_config
 
 def start_aria2_rpc(config):
-    """Starts aria2c process with RPC server and speed settings from config"""
+    """Starts aria2c process with RPC server"""
     max_download = config.get('max_download_speed', 0)
     max_upload = config.get('max_upload_speed', 0)
     
@@ -58,13 +59,29 @@ def start_aria2_rpc(config):
         cmd.append(f"--max-download-limit={max_download}K")
     if max_upload > 0:
         cmd.append(f"--max-upload-limit={max_upload}K")
-    
+
     aria2_process = subprocess.Popen(cmd)
     return aria2_process
 
 def cleanup(process):
     print("Stopping aria2c...")
     process.terminate()
+
+def print_progress(download):
+    """Prints download progress"""
+    progress = download.progress
+    speed = download.download_speed_string()
+    peers = download.connections
+    size = download.total_length_string()
+    status = f"Progress: {progress:.1f}% | Speed: {speed} | Peers: {peers} | Size: {size}"
+    print(f"\r{status.ljust(80)}", end='')
+
+def print_seeding_stats(download):
+    """Prints seeding statistics"""
+    uploaded = download.upload_length_string()
+    speed = download.upload_speed_string()
+    status = f"Seeding: Uploaded {uploaded} | Speed: {speed}"
+    print(f"\r{status.ljust(80)}", end='')
 
 def main():
     source = input("Enter a magnet link or the path to a file.torrent: ").strip()
@@ -131,22 +148,6 @@ def main():
 
     except KeyboardInterrupt:
         print("\n\nOperation terminated by user")
-
-def print_progress(download):
-    """Prints download progress"""
-    progress = download.progress
-    speed = download.download_speed_string()
-    peers = download.connections
-    size = download.total_length_string()
-    status = f"Progress: {progress:.1f}% | Speed: {speed} | Peers: {peers} | Size: {size}"
-    print(f"\r{status.ljust(80)}", end='')
-
-def print_seeding_stats(download):
-    """Prints seeding statistics"""
-    uploaded = download.upload_length_string()
-    speed = download.upload_speed_string()
-    status = f"Seeding: Uploaded {uploaded} | Speed: {speed}"
-    print(f"\r{status.ljust(80)}", end='')
 
 if __name__ == "__main__":
     main()
